@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MyRock</title>
+  <style>
+    body {
+      background-color: black;
+      margin: 0;
+      overflow: hidden;
+      color: white;
+      font-family: sans-serif;
+    }
+    
+    #particleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1; 
+      display: block;
+    }
+
+    .navbar {
+      background-color: yellow;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      position: relative;
+      z-index: 20;
+    }
+
+    .navbar button {
+      padding: 8px 16px;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 5px;
+      border: 1px solid #333;
+    }
+
+    .page {
+      display: none; 
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    h1 {
+      background: linear-gradient(to right, #f0f0f0, #800080);
+      padding: 12px 28px;
+      border-radius: 8px;
+      color: yellow;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <button onclick="showPage('home')">Home</button>
+    <button onclick="showPage('profile')">Profile</button>
+    <button onclick="showPage('search')">Search</button>
+  </nav>
+
+  <div id="home" class="page active">
+    <h1>Home Section</h1>
+    <p>Welcome to MyRock!</p>
+  </div>
+
+  <div id="profile" class="page">
+    <h1>Profile</h1>
+    <p>This is your user info.</p>
+  </div>
+
+  <div id="search" class="page">
+    <h1>Search</h1>
+    <p>Looking for something?</p>
+  </div>
+
+  <canvas id="particleCanvas"></canvas>
+
+  <script> 
+    function showPage(pageId) {
+      const pages = document.querySelectorAll('.page');
+      pages.forEach(page => page.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+    }
+
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particlesArray = [];
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 20 + 10;
+            this.speedX = Math.random() * 2 - 1;
+            this.speedY = Math.random() * 2 - 1;
+            this.emoji = "✨";
+        }
+
+        draw() {
+            ctx.font = `${this.size}px serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(this.emoji, this.x, this.y);
+        }
+
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+
+            if (this.x > canvas.width) this.x = 0;
+            if (this.x < 0) this.x = canvas.width;
+            if (this.y > canvas.height) this.y = 0;
+            if (this.y < 0) this.y = canvas.height;
+        }
+    }
+
+    function init() {
+        for (let i = 0; i < 50; i++) {
+            particlesArray.push(new Particle());
+        }
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particlesArray.length; i++) {
+            particlesArray[i].update();
+            particlesArray[i].draw();
+        }
+        requestAnimationFrame(animate);
+    }
+
+    init();
+    animate();
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
