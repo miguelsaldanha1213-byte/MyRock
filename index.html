@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>MyRock</title>
+  <meta charset="UTF-8">
+  <title>MyRock - Social Network</title>
   <style>
     body {
       background-color: black;
       margin: 0;
-      overflow: hidden;
+      overflow-x: hidden;
       color: white;
-      font-family: sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     
     #particleCanvas {
@@ -21,20 +22,29 @@
 
     .navbar {
       background-color: yellow;
-      padding: 10px;
+      padding: 15px;
       display: flex;
       justify-content: center;
-      gap: 10px;
-      position: relative;
-      z-index: 20;
+      gap: 15px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 10px rgba(255, 255, 0, 0.2);
     }
 
     .navbar button {
-      padding: 8px 16px;
+      padding: 10px 20px;
       cursor: pointer;
       font-weight: bold;
-      border-radius: 5px;
-      border: 1px solid #333;
+      border-radius: 20px;
+      border: 2px solid #333;
+      background: white;
+      transition: 0.3s;
+    }
+
+    .navbar button:hover {
+      background: #f0f0f0;
+      transform: scale(1.05);
     }
 
     .page {
@@ -43,6 +53,8 @@
       text-align: center;
       position: relative;
       z-index: 10;
+      max-width: 800px;
+      margin: 0 auto;
     }
 
     .page.active {
@@ -50,35 +62,114 @@
     }
 
     h1 {
-      background: linear-gradient(to right, #f0f0f0, #800080);
-      padding: 12px 28px;
-      border-radius: 8px;
+      background: linear-gradient(to right, #4b0082, #800080);
+      padding: 15px 30px;
+      border-radius: 50px;
       color: yellow;
       display: inline-block;
+      margin-bottom: 30px;
+      border: 2px solid yellow;
+    }
+
+    .post-box {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 0, 0.3);
+    }
+
+    textarea {
+      width: 90%;
+      height: 80px;
+      border-radius: 10px;
+      padding: 12px;
+      border: none;
+      font-size: 16px;
+      margin-bottom: 10px;
+      resize: none;
+    }
+
+    .btn-post {
+      background: yellow;
+      color: black;
+      border: none;
+      padding: 10px 30px;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+    }
+
+    #feedContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .post {
+      background: white;
+      color: black;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      text-align: left;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      animation: fadeIn 0.5s ease;
+    }
+
+    .post small {
+      color: #666;
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.8em;
+    }
+
+    .post p {
+      margin: 0;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
 
   <nav class="navbar">
-    <button onclick="showPage('home')">Home</button>
+    <button onclick="showPage('home')">Home / Feed</button>
     <button onclick="showPage('profile')">Profile</button>
     <button onclick="showPage('search')">Search</button>
   </nav>
 
   <div id="home" class="page active">
-    <h1>Home Section</h1>
-    <p>Welcome to MyRock!</p>
+    <h1>MyRock Feed</h1>
+    
+    <div class="post-box">
+      <textarea id="postInput" placeholder="What is happening in the Rock world?"></textarea>
+      <br>
+      <button class="btn-post" onclick="addPost()">Post</button>
+    </div>
+
+    <div id="feedContainer"></div>
   </div>
 
   <div id="profile" class="page">
-    <h1>Profile</h1>
-    <p>This is your user info.</p>
+    <h1>Your Profile</h1>
+    <div class="post-box">
+      <p><strong>Username:</strong> RockStar_01</p>
+      <p><strong>Bio:</strong> Code and Guitar lover.</p>
+    </div>
   </div>
 
   <div id="search" class="page">
     <h1>Search</h1>
-    <p>Looking for something?</p>
+    <input type="text" placeholder="Search friends..." style="padding: 10px; border-radius: 20px; width: 70%;">
   </div>
 
   <canvas id="particleCanvas"></canvas>
@@ -90,35 +181,65 @@
       document.getElementById(pageId).classList.add('active');
     }
 
+    const feedContainer = document.getElementById('feedContainer');
+    const postInput = document.getElementById('postInput');
+
+    window.onload = () => {
+      const savedPosts = JSON.parse(localStorage.getItem('myRockPosts')) || [];
+      savedPosts.forEach(post => renderPost(post.text, post.date));
+    };
+
+    function addPost() {
+      const text = postInput.value.trim();
+      if (text === "") return alert("Write something first!");
+
+      const date = new Date().toLocaleString('en-US');
+      
+      const savedPosts = JSON.parse(localStorage.getItem('myRockPosts')) || [];
+      savedPosts.unshift({ text, date });
+      localStorage.setItem('myRockPosts', JSON.stringify(savedPosts));
+
+      renderPost(text, date, true);
+      postInput.value = "";
+    }
+
+    function renderPost(text, date, isNew = false) {
+      const postDiv = document.createElement('div');
+      postDiv.className = 'post';
+      postDiv.innerHTML = `
+        <small>🕒 ${date}</small>
+        <p>${text}</p>
+      `;
+      
+      if (isNew) {
+        feedContainer.prepend(postDiv);
+      } else {
+        feedContainer.appendChild(postDiv);
+      }
+    }
+
     const canvas = document.getElementById('particleCanvas');
     const ctx = canvas.getContext('2d');
-    
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     const particlesArray = [];
-
     class Particle {
         constructor() {
             this.x = Math.random() * canvas.width;
             this.y = Math.random() * canvas.height;
-            this.size = Math.random() * 20 + 10;
-            this.speedX = Math.random() * 2 - 1;
-            this.speedY = Math.random() * 2 - 1;
-            this.emoji = "✨";
+            this.size = Math.random() * 15 + 5;
+            this.speedX = Math.random() * 1.5 - 0.75;
+            this.speedY = Math.random() * 1.5 - 0.75;
+            this.emoji = "⚡";
         }
-
         draw() {
             ctx.font = `${this.size}px serif`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
             ctx.fillText(this.emoji, this.x, this.y);
         }
-
         update() {
             this.x += this.speedX;
             this.y += this.speedY;
-
             if (this.x > canvas.width) this.x = 0;
             if (this.x < 0) this.x = canvas.width;
             if (this.y > canvas.height) this.y = 0;
@@ -127,17 +248,14 @@
     }
 
     function init() {
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 40; i++) {
             particlesArray.push(new Particle());
         }
     }
 
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (let i = 0; i < particlesArray.length; i++) {
-            particlesArray[i].update();
-            particlesArray[i].draw();
-        }
+        particlesArray.forEach(p => { p.update(); p.draw(); });
         requestAnimationFrame(animate);
     }
 
